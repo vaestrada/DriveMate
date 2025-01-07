@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveMate - Your Solo Driving Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Font Awesome CDN for icons (Optional if you plan to use other icons) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      integrity="sha512-papwccZg8Y2pV/+jZ/yM2V3mqdBhLJXRn0iVRUPBTnMEE8g96owFSJeH3pG8rw+DGEOeIlOV0yDYCQnS1a0T1w=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <!-- Main Content of Your Webpage -->
+    <h1>DriveMate</h1>
+    <p>Welcome to DriveMate! Your personal solo driving assistant.</p>
+    <!-- Add other content as needed -->
+
+    <!-- Chat Bubble -->
+    <div id="chat-bubble" aria-label="Open Chat">
+        <img src="{{ url_for('static', filename='images/chat-icon.png') }}" alt="Chat">
+    </div>
+
+    <!-- Chat Window -->
+    <div id="chat-window" style="display: flex;">
+        <div id="chat-window-header">
+            <h2>DriveMate</h2>
+            <div>
+                <button class="clear-btn" title="Clear Chat" aria-label="Clear Chat">
+                    <img src="{{ url_for('static', filename='images/trash-icon.png') }}" alt="Clear Chat" class="icon">
+                </button> <!-- Clear History Button -->
+                <button class="close-btn" aria-label="Close Chat Window">&times;</button> <!-- Close Button -->
+            </div>
+        </div>
+        <div id="chat-box" aria-live="polite" aria-atomic="false">
+            <!-- Messages will appear here -->
+        </div>
+        <form id="chat-form" autocomplete="off">
+            <input type="text" id="query" name="query" placeholder="Type your question here..." required aria-label="Type your question here" autocomplete="off">
+            <button type="submit" class="send-btn" aria-label="Send Message">Send</button>
+        </form>
+    </div>
+
+    <!-- Removed External Confirmation Modal -->
+
+    <script>
+        $(document).ready(function() {
+            function getCurrentTime() {
+                var now = new Date();
+                return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            // Function to send AI messages with typewriter effect
+            function sendAIMessage(text, callback) {
+                // Create AI message container without text
+                var aiMessage = '<div class="message ai"><strong>DriveMate:</strong> <span class="message-text"></span><span class="timestamp">' + getCurrentTime() + '</span></div>';
+                $('#chat-box').append(aiMessage);
+                // Select the message-text span
+                var messageElement = $('.message.ai').last().find('.message-text');
+                // Type out the AI response
+                typeWriter(text, messageElement, 20, callback); // Increased speed (20ms delay)
+            }
+
+            // Load chat history from localStorage
+            if (localStorage.getItem('chatHistory')) {
+                $('#chat-box').html(localStorage.getItem('chatHistory'));
+                // Scroll to bottom
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+            }
+
+            // Function to send welcome message if first time
+            function sendWelcomeMessage() {
+                // Check if chat history is empty
+                if (!localStorage.getItem('chatHistory') || localStorage.getItem('chatHistory').trim() === "") {
+                    sendAIMessage("Hi! How can I help you today?");
+                }
+            }
+
+            // Toggle Chat Window
+            $('#chat-bubble').on('click', function() {
+                $('#chat-window').fadeToggle(function() {
+                    // After toggling, if the chat window is visible, check for welcome message
+                    if ($('#chat-window').is(':visible')) {
+                        sendWelcomeMessage();
+                    }
+                });
+            });
+
+            // Close Chat Window
+            $('.close-btn').on('click', function() {
+                $('#chat-window').fadeOut();
+            });
+
+            // Close Chat Window by Clicking Header
+            $('#chat-window-header').on('click', function(event) {
+                // Prevent closing when clicking on buttons inside the header
+                if (!$(event.target).closest('button').length) {
+                    $('#chat-window').fadeOut();
+                }
+            });
+
+            // Handle Clear Chat Confirmation within Chat
+            $('.clear-btn').on('click', function() {
+                // Check if a confirmation prompt already exists
+                if ($('.confirmation').length > 0) return;
+
+                // Create confirmation prompt message
+                var confirmationMessage = '<div class="message ai confirmation"><strong>DriveMate:</strong> Are you sure you want to clear the chat history?' +
+                                          '<div class="confirmation-buttons">' +
+                                          '<button class="confirm-clear-btn">Yes</button>' +
+                                          '<button class="cancel-clear-btn">No</button>' +
+                                          '</div>' +
+                                          '<span class="timestamp">' + getCurrentTime() + '</span></div>';
+                $('#chat-box').append(confirmationMessage);
+                // Save to localStorage
+                localStorage.setItem('chatHistory', $('#chat-box').html());
+                // Scroll to bottom
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+            });
+
+            // Event Delegation for Dynamically Added Buttons
+            $('#chat-box').on('click', '.confirm-clear-btn', function() {
+                // Send "Chat history has been cleared." message
+                sendAIMessage("Chat history has been cleared.", function() {
+                    // Introduce a brief delay before clearing the chat
+                    setTimeout(function() {
+                        // After the message is typed out, clear the chat
+                        $('#chat-box').empty();
+                        localStorage.removeItem('chatHistory');
+                        // Send welcome message
+                        sendWelcomeMessage();
+                    }, 1000); // 1-second delay
+                });
+            });
+
+            $('#chat-box').on('click', '.cancel-clear-btn', function() {
+                // Remove the confirmation prompt
+                $('.message.ai.confirmation').remove();
+                // Optionally, send a message confirming cancellation
+                var cancelledMessage = '<div class="message ai"><strong>DriveMate:</strong> Chat history not cleared.<span class="timestamp">' + getCurrentTime() + '</span></div>';
+                $('#chat-box').append(cancelledMessage);
+                // Save to localStorage
+                localStorage.setItem('chatHistory', $('#chat-box').html());
+                // Scroll to bottom
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+            });
+
+            // Typewriter Effect Function with Auto-Scroll and Callback
+            function typeWriter(text, element, delay, callback) {
+                let i = 0;
+                element.parent().addClass('typing'); // Add typing class to show cursor
+                function type() {
+                    if (i < text.length) {
+                        let char = text.charAt(i);
+                        element.append(char);
+                        i++;
+                        // Scroll to bottom after each character is appended
+                        $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                        setTimeout(type, delay);
+                    } else {
+                        element.parent().removeClass('typing'); // Remove typing class to hide cursor
+                        // After typing is complete, save to localStorage and scroll
+                        localStorage.setItem('chatHistory', $('#chat-box').html());
+                        $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                        // Execute callback if provided
+                        if (typeof callback === "function") {
+                            callback();
+                        }
+                    }
+                }
+                type();
+            }
+
+            // Function to send AI messages with typewriter effect
+            function sendAIMessage(text, callback) {
+                // Create AI message container without text
+                var aiMessage = '<div class="message ai"><strong>DriveMate:</strong> <span class="message-text"></span><span class="timestamp">' + getCurrentTime() + '</span></div>';
+                $('#chat-box').append(aiMessage);
+                // Select the message-text span
+                var messageElement = $('.message.ai').last().find('.message-text');
+                // Type out the AI response
+                typeWriter(text, messageElement, 20, callback); // Increased speed (20ms delay)
+            }
+
+            // Initial Check: If chat is already open on page load, send welcome message
+            if ($('#chat-window').is(':visible')) {
+                sendWelcomeMessage();
+            }
+
+            $('#chat-form').on('submit', function(e) {
+                e.preventDefault();
+                var userInput = $('#query').val().trim();
+                if (userInput === "") return;
+
+                // Display user message with timestamp
+                var userMessage = '<div class="message user"><strong>You:</strong> ' + userInput + '<span class="timestamp">' + getCurrentTime() + '</span></div>';
+                $('#chat-box').append(userMessage);
+                // Save to localStorage
+                localStorage.setItem('chatHistory', $('#chat-box').html());
+                // Scroll to bottom
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+
+                // Display AI thinking indicator with animated dots
+                var thinkingMessage = '<div class="message ai thinking"><strong>DriveMate:</strong> <span class="animated-dots">' +
+                                      '<span class="dot"></span>' +
+                                      '<span class="dot"></span>' +
+                                      '<span class="dot"></span>' +
+                                      '</span><span class="timestamp">' + getCurrentTime() + '</span></div>';
+                $('#chat-box').append(thinkingMessage);
+                // Save to localStorage
+                localStorage.setItem('chatHistory', $('#chat-box').html());
+                // Scroll to bottom
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+
+                // Send AJAX request
+                $.ajax({
+                    url: '/ask',
+                    method: 'POST',
+                    data: { query: userInput },
+                    success: function(response) {
+                        // Remove the thinking message
+                        $('.message.ai.thinking').remove();
+
+                        if (response.answer) {
+                            // Create AI message container without text
+                            var aiMessage = '<div class="message ai"><strong>DriveMate:</strong> <span class="message-text"></span><span class="timestamp">' + getCurrentTime() + '</span></div>';
+                            $('#chat-box').append(aiMessage);
+                            // Select the message-text span
+                            var messageElement = $('.message.ai').last().find('.message-text');
+                            // Type out the AI response
+                            typeWriter(response.answer, messageElement, 20); // Increased speed (20ms delay)
+                        } else if (response.error) {
+                            var errorMessage = '<div class="message ai"><strong>Error:</strong> ' + response.error + '<span class="timestamp">' + getCurrentTime() + '</span></div>';
+                            $('#chat-box').append(errorMessage);
+                            // Save to localStorage
+                            localStorage.setItem('chatHistory', $('#chat-box').html());
+                            // Scroll to bottom
+                            $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                        }
+                    },
+                    error: function() {
+                        // Remove the thinking message
+                        $('.message.ai.thinking').remove();
+
+                        var errorMessage = '<div class="message ai"><strong>Error:</strong> An error occurred while processing your request.<span class="timestamp">' + getCurrentTime() + '</span></div>';
+                        $('#chat-box').append(errorMessage);
+                        // Save to localStorage
+                        localStorage.setItem('chatHistory', $('#chat-box').html());
+                        // Scroll to bottom
+                        $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                    }
+                });
+                $('#query').val('');
+            });
+
+            // Optional: Expandable Messages on Click
+            $(document).on('click', '.message', function() {
+                $(this).toggleClass('expanded');
+            });
+        });
+    </script>
+</body>
+</html>
