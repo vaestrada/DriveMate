@@ -33,7 +33,7 @@
 ![Chat Interface](static/images/chat-interface.png)
 *DriveMate Chat Interface*
 
-![Mobile View](https://via.placeholder.com/400x800.png?text=Mobile+View)
+![Mobile View](static/images/mobile-view.png)
 *Responsive Design on Mobile Devices*
 
 ## Getting Started
