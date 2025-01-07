@@ -30,7 +30,7 @@
 
 ## Screenshots
 
-![Chat Interface](https://via.placeholder.com/800x400.png?text=Chat+Interface)
+![Chat Interface](static/images/chat-interface.png)
 *DriveMate Chat Interface*
 
 ![Mobile View](https://via.placeholder.com/400x800.png?text=Mobile+View)
