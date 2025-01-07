@@ -1,8 +1,8 @@
 # DriveMate
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)
-![Flask](https://img.shields.io/badge/flask-2.0%2B-brightgreen.svg)
+![Python](https://img.shields.io/badge/python-3.9.21-blue.svg)
+![Flask](https://img.shields.io/badge/flask-3.1.0-brightgreen.svg)
 
 **DriveMate** is your personal solo driving assistant, designed to enhance your driving experience by providing real-time assistance, navigation, and interactive chat support. Whether you're embarking on a long journey or navigating through city streets, DriveMate is here to help you every step of the way.
 
@@ -42,7 +42,7 @@ Follow these instructions to set up and run DriveMate on your local machine.
 
 ### Prerequisites
 
-- **Python 3.8+**: Ensure Python is installed. You can download it from [here](https://www.python.org/downloads/).
+- **Python 3.9.21**: Ensure Python is installed. You can download it from [here](https://www.python.org/downloads/).
 - **Git**: Install Git from [here](https://git-scm.com/downloads).
 - **Virtual Environment (Optional but Recommended)**: Helps manage dependencies.
 
